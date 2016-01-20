@@ -8,6 +8,6 @@ Parts to be tested:
 - Grab and Release the Ball
 - Win Dance
 
-Parts to be adde:
+Parts to be added:
 
 - Sound effects (Win Sounds etc)
