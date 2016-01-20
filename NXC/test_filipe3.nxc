@@ -1,0 +1,154 @@
+//Speeds for Engines
+#define extremeWaitTimer 1
+#define almostFullspeed 100
+#define Fullspeed 100
+#define backSpin -100
+#define speedGrap 25
+
+//Lightsensors and Parameter for them
+#define Frontleft  IN_1
+#define Frontright IN_3
+#define Middle IN_2
+#define correctedLeftSensor 30
+
+// Engines
+#define EngineRight OUT_B
+#define EngineLeft  OUT_A
+#define Engines OUT_AB
+#define EngineGrap OUT_C
+//Should the programm print values of variables and sensors?
+bool Debug = 0;
+// Race over?
+bool victory = 0;
+
+sub displayTurns(string direction)
+{
+       ClearScreen();
+       TextOut(0,LCD_LINE1,direction);
+       NumOut(0, LCD_LINE2, Sensor(Frontleft));
+       NumOut(0,LCD_LINE3,Sensor(Frontright) + correctedLeftSensor);
+}
+
+
+sub TurnRight()
+{
+    if ((Sensor(Frontright) + correctedLeftSensor) - Sensor(Frontleft)< -150)
+    {
+       if (Debug) displayTurns("Turn Extreme Right");
+       OnFwdReg(EngineRight,backSpin,OUT_REGMODE_SYNC);
+       OnFwdReg(EngineLeft,almostFullspeed,OUT_REGMODE_SYNC);
+    }
+    else
+    {
+        if (Debug) displayTurns("Turn Right");
+        OnFwdReg(EngineLeft,80,OUT_REGMODE_SYNC);
+        OnFwdReg(EngineRight,30,OUT_REGMODE_SYNC);
+    }
+
+}
+
+sub TurnLeft()
+{
+    if ((Sensor(Frontright) + correctedLeftSensor)-(Sensor(Frontleft)) > 150)
+    {
+       if (Debug) displayTurns("Turn Extreme Left");
+       OnFwdReg(EngineLeft,backSpin,OUT_REGMODE_SYNC);
+       OnFwdReg(EngineRight,almostFullspeed,OUT_REGMODE_SYNC);
+    }
+    else
+    {
+        if (Debug) displayTurns("Turn Left");
+        OnFwdReg(EngineLeft,30,OUT_REGMODE_SYNC);
+        OnFwdReg(EngineRight,80,OUT_REGMODE_SYNC);
+    }
+
+}
+
+sub TurnAround()
+{
+
+    for (int i = 0; i < 1950; i++)
+    {
+          OnFwdReg(EngineLeft,-100,OUT_REGMODE_SYNC);
+          OnFwdReg(EngineRight,100,OUT_REGMODE_SYNC);
+          Wait(1);
+    }
+}
+sub toggle_grap()
+{
+    speedGrap = speedGrap*(-1);
+
+    for (int i = 0; i < 10; i++)
+    {
+        OnFwd(EngineGrap, speedGrap);
+        Wait(1);
+    }
+    Wait(750);
+}
+sub WinDance()
+{
+    for (int i = 0; i < 6; i++)
+    {
+        OnFwd(EngineLeft,80);
+        OnFwd(EngineRight,-80);
+        Wait(1);
+        toggle_grap();
+    }
+}
+
+sub driveBackwards()
+{
+    for (int i = 0; i < 1000; i++)
+     {
+         OnFwdReg(Engines,-50,OUT_REGMODE_SYNC);
+         Wait(1);
+     }
+}
+sub testUSSensor()
+{
+     while (true)
+     {
+           ClearScreen();
+           NumOut(0,LCD_LINE1,SensorUS(Middle));
+           Wait(10);
+     }
+}
+sub drive()
+{
+
+  while (true)
+  {
+   if (SensorUS(Middle) <10)
+   {
+        victory = true;
+        OnFwdReg(Engines,0,OUT_REGMODE_SYNC);
+        toggle_grap();
+        driveBackwards();
+        TurnAround();
+        if (victory) WinDance();
+
+   }
+   else if (abs((Sensor(Frontleft))-(Sensor(Frontright) + correctedLeftSensor)) < 50)
+   {
+      OnFwdReg(Engines,Fullspeed,OUT_REGMODE_SYNC);
+      if (Debug)displayTurns("No turn");
+   }
+   else if ((Sensor(Frontleft) - correctedLeftSensor)-Sensor(Frontright) > 50)
+   {
+        TurnRight();
+   }
+   else if ((Sensor(Frontleft) - correctedLeftSensor)-Sensor(Frontright) < -50)
+   {
+        TurnLeft();
+   }
+   Wait(50);
+  }
+}
+task main()
+{
+     SetSensorType(Frontright,IN_TYPE_LIGHT_ACTIVE);
+     SetSensorType(Frontleft,IN_TYPE_LIGHT_ACTIVE);
+     SetSensorLowspeed(Middle);
+     drive();
+}
+
