@@ -81,8 +81,10 @@ sub toggle_grab()
     {
         OnFwd(EngineGrab, speedGrab);
         Wait(1);
+
     }
     Wait(750);
+    OnFwd(EngineGrab, 0);
 }
 sub WinDance()
 {
